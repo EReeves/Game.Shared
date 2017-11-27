@@ -1,0 +1,60 @@
+﻿using System;
+using System.IO;
+using Lidgren.Network;
+using ProtoBuf;
+
+namespace Game.Shared.Network
+{
+    public static class NetworkEvents
+    {
+        public enum Event : uint
+        {
+            BlankNetworkEntity = 0,
+            Name = 1,
+            ChatMessage = 2
+        }
+
+        /// <summary>
+        ///     Runs a callback over a NetIncomingMessage if the event matches.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="ev"></param>
+        /// <param name="receiverType"></param>
+        /// <param name="callback"></param>
+        public static void RunEvent(this NetIncomingMessage message, Event ev, NetworkSingleton.Type receiverType,
+            NetworkSingleton.IncomingMessageDelegate callback)
+        {
+            if ((Event) message.ReadUInt32() == ev)
+                callback.Invoke(receiverType, message);
+        }
+
+        /// <summary>
+        ///     Serualizes an event with an object of attribute ProtoContract.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ev"></param>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static byte[] Serialize<T>(this Event ev, T obj) //Where T has attribute ProtoContract
+        {
+            var ms = new MemoryStream();
+            var eventBytes = BitConverter.GetBytes((uint) ev);
+            ms.Write(eventBytes, 0, eventBytes.Length);
+            Serializer.Serialize(ms, obj);
+            return ms.ToArray();
+        }
+
+        /// <summary>
+        ///     Deserializes a byte array in to an event and object of attribute ProtoContract.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static T DeserializeToEvent<T>(this byte[] bytes) //Where T has attribute ProtoContract
+        {
+            var stream = new MemoryStream(bytes, sizeof(uint), bytes.Length - sizeof(uint));
+            var ne = Serializer.Deserialize<T>(stream);
+            return ne;
+        }
+    }
+}
