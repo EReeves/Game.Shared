@@ -27,6 +27,7 @@ namespace Game.Shared.Components.Map
             var map = ParseXML($"{content.RootDirectory}{filename}");
             map.SortTilesets();
             map.LoadTextures(content);
+            Isometric.Map = map;
             return map;
         }
 
@@ -43,7 +44,8 @@ namespace Game.Shared.Components.Map
             tilesetAttributeMap = new Dictionary<string, ReadTilesetDelegate>
             {
                 {"firstgid", (r, ts) => { ts.FirstGid = int.Parse(r.Value); }},
-                {"source", (r, ts) => { ts.Source = r.Value; }}
+                {"source", (r, ts) => { ts.Source = r.Value.Split('.')[0]; }}
+                
             };
 
             nodeMap = new Dictionary<string, ReadXmlDelegate>

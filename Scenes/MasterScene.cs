@@ -41,14 +41,20 @@ namespace Game.Shared.Scenes
             colliderEntity = createEntity("collider");
 
 
-            Debug.log(colliderEntity.rotation);
             camera.setPosition(new Vector2(100, 200));
             //camera.transform.setPosition(spawn.x+camera.bounds.width/4, spawn.y-camera.bounds.height/1.5f);
         }
 
         public override void update()
         {
-            var speed = 6f;
+            debugmove();
+
+            base.update();
+        }
+
+        private void debugmove()
+        {
+            var speed = 400f * Time.deltaTime;
 
             if (Input.isKeyDown(Keys.Up))
                 camera.setPosition(camera.position + new Vector2(0, -speed));
@@ -64,5 +70,6 @@ namespace Game.Shared.Scenes
 
             base.update();
         }
+
     }
 }

@@ -78,6 +78,7 @@
     <Compile Include="Utility\DenseArray.cs" />
     <Compile Include="Utility\FixedSizedQueue.cs" />
     <Compile Include="Utility\GenericExtensions.cs" />
+    <Compile Include="Utility\Isometric.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\lidgren-network-gen3\Lidgren.Network\Lidgren.Network.csproj">

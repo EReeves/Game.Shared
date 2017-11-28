@@ -5,6 +5,7 @@ using System.Linq;
 using Linq.Extras;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Nez.IEnumerableExtensions;
 
 namespace Game.Shared.Components.Map
 {
@@ -28,9 +29,16 @@ namespace Game.Shared.Components.Map
 
         public Texture2D Texture { get; set; }
         
-        public static Tileset TilesetForPosition(int pos, IEnumerable<Tileset> list)
+        public static Tileset TilesetForPosition(int pos, IList<Tileset> list)
         {
-            return list.First(a => a.FirstGid >= pos);
+            for(var i=0;i<list.count();i++)
+            {
+                if (list.count() == 1 || list[i].FirstGid >= pos && list.count()-1 >= i + 1 && list[i + 1].FirstGid > pos)
+                {
+                    return list[i];
+                }
+            }
+            return null;
         }
 
         public static void LoadTextures(ContentManager content, IEnumerable<Tileset> list)
