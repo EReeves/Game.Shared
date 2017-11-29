@@ -11,15 +11,10 @@ namespace Game.Shared.Components.Map
 {
     public class Tileset
     {
-        public Tileset()
-        {
-            
-        }
-
-        public Tileset(string source)
-        {
-            Source = source;
-        }
+        public int TileWidth { get; set; }
+        public int TileHeight { get; set; }
+        public int Columns { get; set; }
+        
         
         //Tileset filename
         public string Source { get; set; }
@@ -29,11 +24,12 @@ namespace Game.Shared.Components.Map
 
         public Texture2D Texture { get; set; }
         
+       
         public static Tileset TilesetForPosition(int pos, IList<Tileset> list)
         {
             for(var i=0;i<list.count();i++)
             {
-                if (list.count() == 1 || list[i].FirstGid >= pos && list.count()-1 >= i + 1 && list[i + 1].FirstGid > pos)
+                if (list.count() == 1 || list.count()-1 >= i + 1 && list[i + 1].FirstGid > pos)
                 {
                     return list[i];
                 }

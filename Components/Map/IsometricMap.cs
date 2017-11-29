@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Nez;
 
@@ -10,6 +11,7 @@ namespace Game.Shared.Components.Map
         public int Height { get; set; }
         public int TileWidth { get; set; }
         public int TileHeight { get; set; }
+        public Vector2 LargestTileSize { get; private set; }
         private bool tilesetsSorted = false;
 
         //5 should do for now. Use a list because we will probably have multiple maps.
@@ -21,6 +23,15 @@ namespace Game.Shared.Components.Map
         {
             Tilesets.Sort((a, b) => a.FirstGid.CompareTo(b.FirstGid));
             tilesetsSorted = true;
+
+            //Set largest tile size, used for culling
+            var x = 0; var y = 0;
+            foreach (var tileset in Tilesets)
+            {
+                x = tileset.TileWidth > x ? tileset.TileWidth : x;
+                y = tileset.TileHeight > y ? tileset.TileHeight : y;
+            }
+            LargestTileSize = new Vector2(x,y);
         }
 
         public void LoadTextures(ContentManager content)

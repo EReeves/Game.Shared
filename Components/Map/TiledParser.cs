@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using Game.Shared.Utility;
@@ -44,7 +45,9 @@ namespace Game.Shared.Components.Map
             tilesetAttributeMap = new Dictionary<string, ReadTilesetDelegate>
             {
                 {"firstgid", (r, ts) => { ts.FirstGid = int.Parse(r.Value); }},
-                {"source", (r, ts) => { ts.Source = r.Value.Split('.')[0]; }}
+                {"columns", (r,ts) => { ts.Columns = int.Parse(r.Value); }},
+                {"tilewidth", (r, ts) => { ts.TileWidth = int.Parse(r.Value); }},
+                {"tileheight", (r, ts) => { ts.TileHeight = int.Parse(r.Value);  }}
                 
             };
 
@@ -68,12 +71,19 @@ namespace Game.Shared.Components.Map
         {
             var tileset = new Tileset();
 
+            //Attributes
             while (r.MoveToNextAttribute())
             {
                 tilesetAttributeMap.TryGetValue(r.Name, out var action);
-                Debug.Assert(action != null, nameof(action) + " != null");
-                action.Invoke(r, tileset);
+                action?.Invoke(r, tileset);
             }
+            //Data
+            while (r.Name != "image") r.Read();
+            r.MoveToAttribute("source");
+            tileset.Source = r.Value;
+            tileset.Source = tileset.Source.Replace(".png", string.Empty); //Clean extension
+            tileset.Source = tileset.Source.Replace(".", string.Empty); //Clean relative dir
+            tileset.Source = tileset.Source.Replace("/", string.Empty); // e.g ../../
             map.Tilesets.Add(tileset);
         }
 
@@ -122,7 +132,10 @@ namespace Game.Shared.Components.Map
             using (var reader = XmlReader.Create(filename))
             {
                 while (reader.Read())
-                    nodeMap.GetValue(reader.Name)?.Invoke(reader, map);
+                {
+                    if( reader.NodeType != XmlNodeType.EndElement)
+                        nodeMap.GetValue(reader.Name)?.Invoke(reader, map);
+                }
             }
 
             return map;
