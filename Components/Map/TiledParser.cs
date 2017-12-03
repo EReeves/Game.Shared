@@ -1,30 +1,191 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using Game.Shared.Utility;
-using Microsoft.Xna.Framework.Content;
 using Linq.Extras;
-using Nez;
-using Debug = System.Diagnostics.Debug;
+using Nez.Systems;
 
 namespace Game.Shared.Components.Map
 {
-    public class TiledParser
+    public static class TiledParser
     {
-        //<map .../> Attribute mapping. 
-        private Dictionary<string, ReadXmlDelegate> mapAttributeMap;
-        //<tileset .../> Attribute mapping. 
-        private Dictionary<string, ReadTilesetDelegate> tilesetAttributeMap;
-        //<xml/> Parent nodes
-        private Dictionary<string, ReadXmlDelegate> nodeMap;
-        //Used to bind the StrategyMap to the map/reader
-        private delegate void ReadXmlDelegate(XmlReader reader, IsometricMap map);
-        private delegate void ReadTilesetDelegate(XmlReader reader, Tileset tileset);
+        //Nodes, data and attributes are directed to these maps, parsed and put in to data structures.
 
-        public IsometricMap Load(ContentManager content, string filename)
+        private static readonly Dictionary<string, ReadXmlDelegate> nodeMap =
+            new Dictionary<string, ReadXmlDelegate>
+            {
+                ["map"] = ReadMapNode,
+                ["tileset"] = ReadTilesetNode,
+                ["layer"] = ReadLayerNode,
+                ["objectgroup"] = ReadObjectGroupNode
+            };
+
+        private static readonly Dictionary<string, ReadXmlDelegate> mapParseMap =
+            new Dictionary<string, ReadXmlDelegate>
+            {
+                ["width"] = (r, map) => { map.Width = r.ReadContentAsInt(); },
+                ["height"] = (r, map) => { map.Height = r.ReadContentAsInt(); },
+                ["tilewidth"] = (r, map) => { map.TileWidth = r.ReadContentAsInt(); },
+                ["tileheight"] = (r, map) => { map.TileHeight = r.ReadContentAsInt(); }
+            };
+
+        private static readonly Dictionary<string, ReadTilesetDelegate> tilesetParseMap =
+            new Dictionary<string, ReadTilesetDelegate>
+            {
+                ["firstgid"] = (r, tileset) => { tileset.FirstGid = r.ReadContentAsInt(); },
+                ["columns"] = (r, tileset) => { tileset.Columns = r.ReadContentAsInt(); },
+                ["tilewidth"] = (r, tileset) => { tileset.TileWidth = r.ReadContentAsInt(); },
+                ["tileheight"] = (r, tileset) => { tileset.TileHeight = r.ReadContentAsInt(); },
+                ["image"] = (r, tileset) =>
+                {
+                    r.MoveToAttribute("source"); //don't bother with a map for one attribute.
+                    tileset.Source = Path.GetFileNameWithoutExtension(r.Value);
+                }
+            };
+
+        private static readonly Dictionary<string, ReadObjectDelegate> objectParseMap =
+            new Dictionary<string, ReadObjectDelegate>
+            {
+                ["id"] = (r, tiledObject) => { tiledObject.Id = r.ReadContentAsInt(); },
+                ["name"] = (r, tiledObject) => { tiledObject.Name = r.Value; },
+                ["x"] = (r, tiledObject) => { tiledObject.X = r.ReadContentAsFloat(); },
+                ["y"] = (r, tiledObject) => { tiledObject.Y = r.ReadContentAsFloat(); },
+                ["width"] = (r, tiledObject) => { tiledObject.Width = r.ReadContentAsFloat(); },
+                ["height"] = (r, tiledObject) => { tiledObject.Height = r.ReadContentAsFloat(); }
+            };
+
+        private static readonly Dictionary<string, ReadObjectGroupDelegate> objectGroupParseMap =
+            new Dictionary<string, ReadObjectGroupDelegate>
+            {
+                ["name"] = (r, objectGrp) => { objectGrp.Add(r.Value, new List<TiledObject>()); },
+                ["object"] = (r, objectGrp) =>
+                {
+                    var tObj = new TiledObject();
+                    while (r.MoveToNextAttribute())
+                    {
+                        objectParseMap.TryGetValue(r.Name, out var value);
+
+                        if (value != null) value.Invoke(r, tObj); //It's a property we know about.
+                        else tObj.Properties.Add(r.Name, r.Value); //Custom property.
+                    }
+
+                    objectGrp.AddObjectToEnd(tObj);
+                }
+            };
+
+        private static readonly Dictionary<string, ReadXmlDelegate> layerParseMap =
+            new Dictionary<string, ReadXmlDelegate>
+            {
+                ["name"] = (r, map) => { map.Layers.Last().Name = r.Value; },
+                ["data"] = (r, map) =>
+                {
+                    //Parse and read indices in to layer.
+                    var mapIndices = r.ReadElementContentAsString()
+                        .Split(',')
+                        .Select(int.Parse)
+                        .ToArray(map.Width * map.Height); //parse csv indices, it's not complicated csv.
+
+                    for (var y = 0; y < map.Height; y++)
+                    for (var x = 0; x < map.Width; x++)
+                        // ReSharper disable once PossibleMultipleEnumeration
+                        map.Layers.Last().indices[x, y] = mapIndices[x + y * map.Width];
+                }
+            };
+
+        //Reads <map .../>
+        private static void ReadMapNode(XmlReader r, IsometricMap map)
         {
-            InitializeStrategyMaps();
+            //Only iterate attributes, map endelement is at the end of the file.
+            while (r.MoveToNextAttribute())
+            {
+                mapParseMap.TryGetValue(r.Name, out var value);
+                value?.Invoke(r, map);
+            }
+            ;
+        }
+
+        //Reads <tileset .../>
+        private static void ReadTilesetNode(XmlReader r, IsometricMap map)
+        {
+            var tileset = new Tileset();
+
+            foreach (var rdr in IterateNodeEnumerable(r))
+            {
+                tilesetParseMap.TryGetValue(rdr.Name, out var value);
+                value?.Invoke(rdr, tileset);
+            }
+            map.Tilesets.Add(tileset);
+        }
+
+        //Reads <layer .../>
+        private static void ReadLayerNode(XmlReader r, IsometricMap map)
+        {
+            map.Layers.Add(new IsometricLayer(map.Width, map.Height));
+
+            foreach (var rdr in IterateNodeEnumerable(r))
+            {
+                layerParseMap.TryGetValue(rdr.Name, out var value);
+                value?.Invoke(rdr, map);
+            }
+        }
+
+        private static void ReadObjectGroupNode(XmlReader r, IsometricMap map)
+        {
+            foreach (var rdr in IterateNodeEnumerable(r))
+            {
+                objectGroupParseMap.TryGetValue(rdr.Name, out var value);
+                value?.Invoke(rdr, map.ObjectGroups);
+            }
+        }
+
+        private static IsometricMap ParseXML(string filename)
+        {
+            var map = new IsometricMap();
+
+            using (var r = XmlReader.Create(filename))
+            {
+                while (ReadNext(r))
+                {
+                    if (r.NodeType == XmlNodeType.EndElement) continue;
+                    nodeMap.TryGetValue(r.Name, out var value);
+                    value?.Invoke(r, map);
+                }
+            }
+
+            return map;
+        }
+
+        //Read without all the garbage.
+        private static bool ReadNext(XmlReader r)
+        {
+            //If it's whitespace or garbage keep reading.
+            XmlNodeType n;
+            bool hasNext;
+            do
+            {
+                hasNext = r.Read();
+                n = r.NodeType;
+            } while (hasNext && n != XmlNodeType.Element && n != XmlNodeType.EndElement && n != XmlNodeType.Attribute);
+            return hasNext;
+        }
+
+        /// <summary>
+        ///     Iterate over everything within a node including data.
+        /// </summary>
+        /// <param name="r"></param>
+        /// <returns></returns>
+        private static IEnumerable<XmlReader> IterateNodeEnumerable(XmlReader r)
+        {
+            while (r.NodeType != XmlNodeType.EndElement)
+            {
+                if (!r.MoveToNextAttribute()) ReadNext(r); //Move to attribute if applicable, else read next line.
+                yield return r;
+            }
+        }
+
+        public static IsometricMap Load(this NezContentManager content, string path)
+        {
             var map = ParseXML($"{content.RootDirectory}{filename}");
             map.SortTilesets();
             map.LoadTextures(content);
@@ -32,115 +193,14 @@ namespace Game.Shared.Components.Map
             return map;
         }
 
-        private void InitializeStrategyMaps()
-        {
-            mapAttributeMap = new Dictionary<string, ReadXmlDelegate>
-            {
-                {"width", (r, map) => { map.Width = r.ReadContentAsInt(); }},
-                {"height", (r, map) => { map.Height = r.ReadContentAsInt(); }},
-                {"tilewidth", (r, map) => { map.TileWidth = r.ReadContentAsInt(); }},
-                {"tileheight", (r, map) => { map.TileHeight = r.ReadContentAsInt(); }}
-            };
-            
-            tilesetAttributeMap = new Dictionary<string, ReadTilesetDelegate>
-            {
-                {"firstgid", (r, ts) => { ts.FirstGid = int.Parse(r.Value); }},
-                {"columns", (r,ts) => { ts.Columns = int.Parse(r.Value); }},
-                {"tilewidth", (r, ts) => { ts.TileWidth = int.Parse(r.Value); }},
-                {"tileheight", (r, ts) => { ts.TileHeight = int.Parse(r.Value);  }}
-                
-            };
+        //Data bound to maps.
 
-            nodeMap = new Dictionary<string, ReadXmlDelegate>
-            {
-                {"map", ReadMapAttributes},
-                {"tileset", ReadTilesetAttributes},
-                {"layer", ReadLayerAttributes}
-            };
-        }
+        private delegate void ReadXmlDelegate(XmlReader reader, IsometricMap map);
 
-        //Reads <map .../> attributes
-        private void ReadMapAttributes(XmlReader r, IsometricMap map)
-        {
-            while (r.MoveToNextAttribute())
-                mapAttributeMap.GetValue(r.Name)?.Invoke(r, map);
-        }
+        private delegate void ReadTilesetDelegate(XmlReader reader, Tileset tileset);
 
-        //Reads <tileset .../> attributes
-        private void ReadTilesetAttributes(XmlReader r, IsometricMap map)
-        {
-            var tileset = new Tileset();
+        private delegate void ReadObjectGroupDelegate(XmlReader reader, ObjectGroups objectGroups);
 
-            //Attributes
-            while (r.MoveToNextAttribute())
-            {
-                tilesetAttributeMap.TryGetValue(r.Name, out var action);
-                action?.Invoke(r, tileset);
-            }
-            //Data
-            while (r.Name != "image") r.Read();
-            r.MoveToAttribute("source");
-            tileset.Source = r.Value;
-            tileset.Source = tileset.Source.Replace(".png", string.Empty); //Clean extension
-            tileset.Source = tileset.Source.Replace(".", string.Empty); //Clean relative dir
-            tileset.Source = tileset.Source.Replace("/", string.Empty); // e.g ../../
-            map.Tilesets.Add(tileset);
-        }
-
-        //Reads <layer .../> attributes.
-        private static void ReadLayerAttributes(XmlReader r, IsometricMap map)
-        {
-            //Don't need a map, it's only one attriute and a subnode.
-            r.MoveToAttribute("name");
-
-            //It's a closing tag.
-            if (!r.HasAttributes) return;
-
-            //New layer
-            var layer = new IsometricLayer(map.Width, map.Height)
-            {
-                Name = r.Value
-            };
-
-            r.MoveToElement();
-            while (!r.Name.Equals("data") && r.NodeType != XmlNodeType.None) // format is <layer><dataforthelayer>
-                r.Read();
-
-            if (r.NodeType != XmlNodeType.Element) return;
-
-            var mapIndices = r.ReadElementContentAsString()
-                .Split(',')
-                .Select(int.Parse)
-                .ToArray(map.Width*map.Height); //parse csv indices, it's not complicated csv.
-
-            for (var y = 0; y < map.Height; y++)
-            {
-                for (var x = 0; x < map.Width; x++)
-                {
-                    // ReSharper disable once PossibleMultipleEnumeration
-                    layer.indices[x, y] = mapIndices[x + (y*map.Width)];
-                }
-            }
-
-            map.Layers.Add(layer);
-        }
-
-        private IsometricMap ParseXML(string filename)
-        {
-            var map = new IsometricMap();
-
-            using (var reader = XmlReader.Create(filename))
-            {
-                while (reader.Read())
-                {
-                    if( reader.NodeType != XmlNodeType.EndElement)
-                        nodeMap.GetValue(reader.Name)?.Invoke(reader, map);
-                }
-            }
-
-            return map;
-        }
-
-       
+        private delegate void ReadObjectDelegate(XmlReader reader, TiledObject tiledObject);
     }
 }

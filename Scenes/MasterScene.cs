@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Nez;
 using Game.Shared.Utility;
-using Nez.Analysis;
-using Nez.Console;
 
 namespace Game.Shared.Scenes
 {
@@ -22,13 +20,12 @@ namespace Game.Shared.Scenes
             clearColor = Color.CornflowerBlue;
             addRenderer(new DefaultRenderer());
 
-            var tiledEntity = createEntity("tiledmap");
             //           var map = content.Load<TmxMap>("Map/untitled");
-
+            content.Load("/Map/untitled.tmx");
             Benchmark.Go(() =>
             {
-                var parser = new TiledParser();
-                map = parser.Load(content, "/Map/untitled.tmx");
+                map = content.Load("/Map/untitled.tmx");
+                
                 isometricMapComponent = new IsometricMapComponent(map);
                 tiledEntity.addComponent(isometricMapComponent);
             });

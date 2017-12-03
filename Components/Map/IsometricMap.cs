@@ -17,6 +17,7 @@ namespace Game.Shared.Components.Map
         //5 should do for now. Use a list because we will probably have multiple maps.
         public List<Tileset> Tilesets { get; set; } = new List<Tileset>(5);
         public List<IsometricLayer> Layers { get; set; } = new List<IsometricLayer>(5);
+        public ObjectGroups ObjectGroups { get; set; } = new ObjectGroups();
 
 
         public void SortTilesets()

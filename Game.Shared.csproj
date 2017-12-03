@@ -60,6 +60,8 @@
     <Compile Include="Components\Map\IsometricMap.cs" />
     <Compile Include="Components\Map\MapCollider.cs" />
     <Compile Include="Components\Map\IsometricMapComponent.cs" />
+    <Compile Include="Components\Map\ObjectGroups.cs" />
+    <Compile Include="Components\Map\TiledObject.cs" />
     <Compile Include="Components\Map\TiledParser.cs" />
     <Compile Include="Components\Map\Tileset.cs" />
     <Compile Include="NetworkComponents\Chat\ChatMessage.cs" />
