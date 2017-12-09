@@ -36,7 +36,7 @@ namespace Game.Shared.Components.Map
                         var subTexturePosition = index - tileset.FirstGid; //Resets position to start at 0 for the subtexture positioning.
                         if (subTexturePosition <= -1) continue; //Don't render empty tiles.
                                                 
-                        var worldpos = Isometric.IsometricToWorld(new Point(x-1,y-1)); //Isometric Projection to world coords.
+                        var worldpos = Isometric.IsometricToWorld(new Point(x-1,y-1), map); //Isometric Projection to world coords.
                         
                         //Culling 
                         if(worldpos.X > camera.bounds.x + camera.bounds.width || //Right side
@@ -63,10 +63,10 @@ namespace Game.Shared.Components.Map
 
         public override void debugRender(Graphics graphics)
         {
-            var tl = Isometric.IsometricToWorld(new Point(1, 0));
-            var tr = Isometric.IsometricToWorld(new Point(map.Width+1, 0));
-            var bl = Isometric.IsometricToWorld(new Point(1, map.Height+1));
-            var br = Isometric.IsometricToWorld(new Point(map.Width+1, map.Height+1));
+            var tl = Isometric.IsometricToWorld(new Point(1, 0), map);
+            var tr = Isometric.IsometricToWorld(new Point(map.Width+1, 0), map);
+            var bl = Isometric.IsometricToWorld(new Point(1, map.Height+1), map);
+            var br = Isometric.IsometricToWorld(new Point(map.Width+1, map.Height+1), map);
             graphics.batcher.drawLine(tl,tr,Color.DarkOliveGreen);
             graphics.batcher.drawLine(tr,br,Color.DarkOliveGreen);
             graphics.batcher.drawLine(br,bl,Color.DarkOliveGreen);
@@ -82,7 +82,7 @@ namespace Game.Shared.Components.Map
                     {
                         var index = map.Layers[l].indices[x - 1, y - 1]; //-1 because indices are zero indexed.
                         var tileset = Tileset.TilesetForPosition(index, map.Tilesets); //Tileset the index belongs to.
-                        var worldpos = Isometric.IsometricToWorld(new Point(x,y)); //Isometric Projection to world coords.
+                        var worldpos = Isometric.IsometricToWorld(new Point(x,y), map); //Isometric Projection to world coords.
                         
                         var color = new Color(150,100,100,10);
                         graphics.batcher.drawPixel(worldpos+new Vector2(0,0),color,2);

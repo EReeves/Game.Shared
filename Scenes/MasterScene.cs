@@ -1,10 +1,13 @@
 ﻿using System.Reflection;
 using Game.Shared.Components;
 using Game.Shared.Components.Map;
+using Game.Shared.NetworkComponents.PlayerComponent;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Nez;
 using Game.Shared.Utility;
+using Microsoft.Xna.Framework.Graphics;
+using Nez.Sprites;
 
 namespace Game.Shared.Scenes
 {
@@ -15,12 +18,16 @@ namespace Game.Shared.Scenes
         private IsometricMap map;
         private IsometricMapComponent isometricMapComponent;
 
+        private Sprite s;
+        private PrototypeSprite spr;
+
         public override void initialize()
         {
             clearColor = Color.CornflowerBlue;
             addRenderer(new DefaultRenderer());
 
             //           var map = content.Load<TmxMap>("Map/untitled");
+            var tiledEntity = createEntity("mapEntity");
             content.Load("/Map/untitled.tmx");
             Benchmark.Go(() =>
             {
@@ -31,20 +38,43 @@ namespace Game.Shared.Scenes
             });
             
             
- 
+            var plyE = createEntity("plyer");
+            var txt2d = content.Load<Texture2D>("player");
+            s = new Sprite(txt2d);
+            Player p = new Player(new Mover(), s);
+            plyE.addComponent(p);
+            plyE.position = new Vector2(200,200);
+            plyE.addComponent(s);
+
+           
+            
+            
+  spr = new PrototypeSprite(100,100);
+            var hello = createEntity("asd");
+            spr.color = Color.Black;
+
+            hello.addComponent(spr);
             //  var objectLayer = map.getObjectGroup("Objects");
             //  var spawn = objectLayer.objectWithName("spawn");
 
             colliderEntity = createEntity("collider");
-
+            MapCollider collider = new MapCollider(map);
+            for (int i = 0; i < collider.colliders.Length; i++)
+            {
+                colliderEntity.addComponent(collider.colliders[i]);
+            }
 
             camera.setPosition(new Vector2(100, 200));
             //camera.transform.setPosition(spawn.x+camera.bounds.width/4, spawn.y-camera.bounds.height/1.5f);
+
+            hello.setPosition(camera.mouseToWorldPoint());
         }
 
         public override void update()
         {
             debugmove();
+            if(spr != null)
+            spr.transform.setRotationDegrees(spr.transform.rotationDegrees + 1 % 360);
 
             base.update();
         }
