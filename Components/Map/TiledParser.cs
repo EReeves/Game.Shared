@@ -67,7 +67,9 @@ namespace Game.Shared.Components.Map
                     var tObj = new TiledObject();
                     while (rdr.MoveToNextAttribute())
                     {
-                        objectParseMap.TryGetValue(rdr.Name, out var value);
+                        // ReSharper disable once InlineOutVariableDeclaration
+                        ReadObjectDelegate value;
+                        objectParseMap.TryGetValue(rdr.Name, out value);
 
                         if (value != null) value.Invoke(rdr, tObj); //It's a property we know about.
                         else tObj.Properties.Add(rdr.Name, rdr.Value); //Custom property.
@@ -121,6 +123,7 @@ namespace Game.Shared.Components.Map
                 tilesetParseMap.TryGetValue(r.Name, out var value);
                 value?.Invoke(r, tileset);
             }
+
             map.Tilesets.Add(tileset);
         }
 
@@ -147,7 +150,7 @@ namespace Game.Shared.Components.Map
 
         private static IsometricMap ParseXML(string filename)
         {
-            var map = new IsometricMap();
+            var map = IsometricMap.Instance;
 
             using (var rdr = XmlReader.Create(filename))
             {

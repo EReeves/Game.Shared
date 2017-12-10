@@ -14,6 +14,7 @@ namespace Game.Shared.Components.Map
         //Sealed the class cause Add is being hidden..
         public new void Add(string key, List<TiledObject> value)
         {
+            if (ContainsKey(key)) return; //Ignore duplicates.
             lastKey = key;
             base.Add(key, value);
         }

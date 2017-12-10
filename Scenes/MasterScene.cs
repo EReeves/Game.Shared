@@ -14,12 +14,12 @@ namespace Game.Shared.Scenes
     public class MasterScene : Scene
     {
         private Entity colliderEntity;
-        private MapCollider mapCollider;
         private IsometricMap map;
         private IsometricMapComponent isometricMapComponent;
 
         private Sprite s;
         private PrototypeSprite spr;
+        private Player p;
 
         public override void initialize()
         {
@@ -28,7 +28,7 @@ namespace Game.Shared.Scenes
 
             //           var map = content.Load<TmxMap>("Map/untitled");
             var tiledEntity = createEntity("mapEntity");
-            content.Load("/Map/untitled.tmx");
+  
             Benchmark.Go(() =>
             {
                 map = content.Load("/Map/untitled.tmx");
@@ -41,15 +41,21 @@ namespace Game.Shared.Scenes
             var plyE = createEntity("plyer");
             var txt2d = content.Load<Texture2D>("player");
             s = new Sprite(txt2d);
-            Player p = new Player(new Mover(), s);
+            var mover = new Mover();
+            
+            plyE.addComponent(s);
+            plyE.addComponent(mover);
+            p = new Player(mover, s);
             plyE.addComponent(p);
             plyE.position = new Vector2(200,200);
-            plyE.addComponent(s);
 
            
             
             
   spr = new PrototypeSprite(100,100);
+            
+            
+            
             var hello = createEntity("asd");
             spr.color = Color.Black;
 
@@ -75,7 +81,7 @@ namespace Game.Shared.Scenes
             debugmove();
             if(spr != null)
             spr.transform.setRotationDegrees(spr.transform.rotationDegrees + 1 % 360);
-
+            
             base.update();
         }
 
