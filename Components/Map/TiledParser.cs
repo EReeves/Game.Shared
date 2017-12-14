@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using Linq.Extras;
-using Nez;
 using Nez.Systems;
 
 namespace Game.Shared.Components.Map
@@ -11,7 +10,7 @@ namespace Game.Shared.Components.Map
     public static class TiledParser
     {
         //Nodes, data and attributes are directed to these maps, parsed and put in to data structures.
-        
+
         //<xml/>
         private static readonly Dictionary<string, ReadXmlDelegate> nodeMap =
             new Dictionary<string, ReadXmlDelegate>
@@ -21,6 +20,7 @@ namespace Game.Shared.Components.Map
                 ["layer"] = ReadLayerNode,
                 ["objectgroup"] = ReadObjectGroupNode
             };
+
         //<map ...>
         private static readonly Dictionary<string, ReadXmlDelegate> mapParseMap =
             new Dictionary<string, ReadXmlDelegate>
@@ -30,6 +30,7 @@ namespace Game.Shared.Components.Map
                 ["tilewidth"] = (rdr, map) => { map.TileWidth = rdr.ReadContentAsInt(); },
                 ["tileheight"] = (rdr, map) => { map.TileHeight = rdr.ReadContentAsInt(); }
             };
+
         //<tileset/>
         private static readonly Dictionary<string, ReadTilesetDelegate> tilesetParseMap =
             new Dictionary<string, ReadTilesetDelegate>
@@ -59,7 +60,7 @@ namespace Game.Shared.Components.Map
 
         //<objectgroup/>
         private static readonly Dictionary<string, ReadXmlDelegate> objectGroupParseMap =
-             new Dictionary<string, ReadXmlDelegate>
+            new Dictionary<string, ReadXmlDelegate>
             {
                 ["name"] = (rdr, map) => { map.ObjectGroups.Add(rdr.Value, new List<TiledObject>()); },
                 ["object"] = (rdr, map) =>
@@ -67,14 +68,17 @@ namespace Game.Shared.Components.Map
                     var tObj = new TiledObject();
                     while (rdr.MoveToNextAttribute())
                     {
-                        objectParseMap.TryGetValue(rdr.Name, out var value);
+                        // ReSharper disable once InlineOutVariableDeclaration
+                        ReadObjectDelegate value;
+                        objectParseMap.TryGetValue(rdr.Name, out value);
 
                         if (value != null) value.Invoke(rdr, tObj); //It's a property we know about.
                         else tObj.Properties.Add(rdr.Name, rdr.Value); //Custom property.
                     }
+
                     //tiled objects are weird, just offset them to fit.
-                    tObj.Y += map.TileHeight/2f;
-                    tObj.X += map.TileHeight*1.5f;
+                    tObj.Y += map.TileHeight / 2f;
+                    tObj.X += map.TileHeight * 1.5f;
 
                     map.ObjectGroups.AddObjectToEnd(tObj);
                 }
@@ -110,8 +114,8 @@ namespace Game.Shared.Components.Map
                 value?.Invoke(rdr, map);
             }
         }
-        
-       //Reads <tileset .../>
+
+        //Reads <tileset .../>
         private static void ReadTilesetNode(XmlReader rdr, IsometricMap map)
         {
             var tileset = new Tileset();
@@ -121,6 +125,7 @@ namespace Game.Shared.Components.Map
                 tilesetParseMap.TryGetValue(r.Name, out var value);
                 value?.Invoke(r, tileset);
             }
+
             map.Tilesets.Add(tileset);
         }
 
@@ -147,7 +152,7 @@ namespace Game.Shared.Components.Map
 
         private static IsometricMap ParseXML(string filename)
         {
-            var map = new IsometricMap();
+            var map = IsometricMap.Instance;
 
             using (var rdr = XmlReader.Create(filename))
             {
@@ -173,6 +178,7 @@ namespace Game.Shared.Components.Map
                 hasNext = rdr.Read();
                 n = rdr.NodeType;
             } while (hasNext && n != XmlNodeType.Element && n != XmlNodeType.EndElement && n != XmlNodeType.Attribute);
+
             return hasNext;
         }
 

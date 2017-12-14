@@ -1,11 +1,9 @@
-﻿using System;
-using Game.Shared.Utility;
-using Microsoft.Xna.Framework;
+﻿using Game.Shared.Utility;
 using Nez;
 
 namespace Game.Shared.Components.Map
 {
-    internal class IsometricMapComponent : RenderableComponent
+    internal class IsometricMapComponent : Component, IUpdatable
     {
         private readonly IsometricMap map;
 
@@ -14,82 +12,26 @@ namespace Game.Shared.Components.Map
             map = _map;
         }
 
-        public override RectangleF bounds { get => new RectangleF(); }
-        public override bool isVisibleFromCamera(Camera camera)
+        public void update()
         {
-            //This is the main map class, it will always be drawn unless manually disabled.
-            return true;
         }
 
-        public override void render(Graphics graphics, Camera camera)
+        public override void onAddedToEntity()
         {
-            for (var y = 1; y <= map.Height; y++)
+            //Add sub components.
+            for (var i = 0; i < map.Layers.Count; i++)
             {
-                for (var x = 1; x <= map.Width; x++)
-                {
-                    // ReSharper disable once ForCanBeConvertedToForeach, faster, this is rendering.
-                    for (var l = 0; l < map.Layers.Count; l++) //Foreach layer
-                    {
-                        var index = map.Layers[l].indices[x-1, y-1];//-1 because indices are zero indexed.
-                        var tileset = Tileset.TilesetForPosition(index, map.Tilesets); //Tileset the index belongs to.
-                        
-                        var subTexturePosition = index - tileset.FirstGid; //Resets position to start at 0 for the subtexture positioning.
-                        if (subTexturePosition <= -1) continue; //Don't render empty tiles.
-                                                
-                        var worldpos = Isometric.IsometricToWorld(new Point(x-1,y-1), map); //Isometric Projection to world coords.
-                        
-                        //Culling 
-                        if(worldpos.X > camera.bounds.x + camera.bounds.width || //Right side
-                           worldpos.Y > camera.bounds.y + camera.bounds.height || //Bottom
-                           worldpos.X < camera.bounds.x - map.LargestTileSize.X || //Left
-                           worldpos.Y < camera.bounds.y - map.LargestTileSize.Y) //Top
-                            continue; //Don't draw
-                            
-                            
-                        var sourceRect = new Rectangle() //Subposition in texture.
-                        {
-                            X = subTexturePosition * tileset.TileWidth,
-                            Y = (int) ((Math.Floor((subTexturePosition / (double)tileset.Columns)))*tileset.TileHeight), //Y needs rounding.
-                            Width = tileset.TileWidth,
-                            Height = tileset.TileHeight
-                        };
-                        
-                        //Finally draw.
-                        graphics.batcher.draw(tileset.Texture, worldpos,sourceRect,Color.White);
-                    }
-                }
-            }
-        }
+                //Set render layer before adding.
+                var layer = Isometric.RENDER_LAYER_START - i;
+                if (layer > map.ObjectRenderLayer && layer < map.ObjectRenderLayerEnd)
+                    map.Layers[i].setRenderLayer(layer);
+                else
+                    map.Layers[i].SetAsObjectPositioningLayer();
 
-        public override void debugRender(Graphics graphics)
-        {
-            var tl = Isometric.IsometricToWorld(new Point(1, 0), map);
-            var tr = Isometric.IsometricToWorld(new Point(map.Width+1, 0), map);
-            var bl = Isometric.IsometricToWorld(new Point(1, map.Height+1), map);
-            var br = Isometric.IsometricToWorld(new Point(map.Width+1, map.Height+1), map);
-            graphics.batcher.drawLine(tl,tr,Color.DarkOliveGreen);
-            graphics.batcher.drawLine(tr,br,Color.DarkOliveGreen);
-            graphics.batcher.drawLine(br,bl,Color.DarkOliveGreen);
-            graphics.batcher.drawLine(bl,tl,Color.DarkOliveGreen);
-
-
-            for (var y = 1; y <= map.Height; y++)
-            {
-                for (var x = 1; x <= map.Width; x++)
-                {
-                    // ReSharper disable once ForCanBeConvertedToForeach, faster, this is rendering.
-                    for (var l = 0; l < map.Layers.Count; l++) //Foreach layer
-                    {
-                        var index = map.Layers[l].indices[x - 1, y - 1]; //-1 because indices are zero indexed.
-                        var tileset = Tileset.TilesetForPosition(index, map.Tilesets); //Tileset the index belongs to.
-                        var worldpos = Isometric.IsometricToWorld(new Point(x,y), map); //Isometric Projection to world coords.
-                        
-                        var color = new Color(150,100,100,10);
-                        graphics.batcher.drawPixel(worldpos+new Vector2(0,0),color,2);
-                    }
-                }
+                entity.addComponent(map.Layers[i]);
             }
 
+            map.CalculateOverlapZones(entity);
         }
     }
 }

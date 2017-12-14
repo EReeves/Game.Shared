@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
 
 namespace Game.Shared.Components.Map
 {
@@ -14,12 +10,13 @@ namespace Game.Shared.Components.Map
         //Sealed the class cause Add is being hidden..
         public new void Add(string key, List<TiledObject> value)
         {
+            if (ContainsKey(key)) return; //Ignore duplicates.
             lastKey = key;
             base.Add(key, value);
         }
 
         /// <summary>
-        /// Adds a TiledObject to the last List added to the dictionary
+        ///     Adds a TiledObject to the last List added to the dictionary
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
@@ -27,8 +24,5 @@ namespace Game.Shared.Components.Map
         {
             this[lastKey].Add(value);
         }
-        
-
-
     }
 }

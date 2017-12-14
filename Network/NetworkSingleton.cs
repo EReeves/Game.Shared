@@ -329,6 +329,7 @@ namespace Game.Shared.Network
                     doDefault = false;
                     break;
                 }
+
                 if (!doDefault) continue;
                 IncomingMessageTypeDefault(t, message);
             }

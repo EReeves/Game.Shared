@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 
 namespace Game.Shared.Components.Map
 {
@@ -11,7 +10,7 @@ namespace Game.Shared.Components.Map
         public float Y { get; set; }
         public float Width { get; set; }
         public float Height { get; set; }
-    
-        public Dictionary<string,string> Properties { get; } = new Dictionary<string, string>();
+
+        public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
     }
 }

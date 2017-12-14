@@ -7,8 +7,8 @@ namespace Game.Shared.Components
 {
     internal class MapCollider
     {
-        public PolygonCollider[] colliders;
         private readonly IsometricMap map;
+        public PolygonCollider[] colliders;
 
         public MapCollider(IsometricMap _map)
         {
@@ -26,10 +26,7 @@ namespace Game.Shared.Components
                 points[2] = new Vector2(obj.X + obj.Width, obj.Y + obj.Height); //BotRight
                 points[3] = new Vector2(obj.X, obj.Y + obj.Height); //BotLeft
 
-                for (var o = 0; o < 4; o++)
-                {
-                    points[o] = Isometric.WorldToIsometricWorld(points[o], map);
-                }
+                for (var o = 0; o < 4; o++) points[o] = Isometric.WorldToIsometricWorld(points[o], map);
 
                 colliders[i] = new PolygonCollider(points);
                 colliders[i].setShouldColliderScaleAndRotateWithTransform(true);
