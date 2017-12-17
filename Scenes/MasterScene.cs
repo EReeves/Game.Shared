@@ -24,7 +24,6 @@ namespace Game.Shared.Scenes
         private Player p;
 
         private Sprite s;
-        private PrototypeSprite spr;
         private UIComponent uiComponent;
         private Entity uiEntity;
 
@@ -63,11 +62,12 @@ namespace Game.Shared.Scenes
             s = new Sprite(txt2d);
             var mover = new Mover();
 
+            plyE.position = new Vector2(200, 200);
+            
+            p = new Player(mover, s);
             plyE.addComponent(s);
             plyE.addComponent(mover);
-            p = new Player(mover, s);
             plyE.addComponent(p);
-            plyE.position = new Vector2(200, 200);
 
             var ef = content.loadEffect("Content/src/tint.mgfxo");
             ef.Parameters["Color"].SetValue(new Vector3(0.3f,0.3f,0.8f));          
@@ -75,8 +75,12 @@ namespace Game.Shared.Scenes
    
             s.material = new Material(BlendState.AlphaBlend,ef);
             //ef.CurrentTechnique.Passes[0].Apply();
+            plyE.position = new Vector2(200,200);
 
-
+           
+            
+            
+   
             colliderEntity = createEntity("collider");
             var collider = new MapCollider(map);
             for (var i = 0; i < collider.colliders.Length; i++) colliderEntity.addComponent(collider.colliders[i]);
@@ -92,9 +96,7 @@ namespace Game.Shared.Scenes
         public override void update()
         {
             debugmove();
-            if (spr != null)
-                spr.transform.setRotationDegrees(spr.transform.rotationDegrees + 1 % 360);
-
+     
             base.update();
         }
 

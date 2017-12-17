@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Game.Shared.NetworkComponents.PlayerComponent;
 using Game.Shared.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,7 +15,9 @@ namespace Game.Shared.Components.Map
         public const float LAYER_DEPTH_OBJFRONT = 0.6f;
         public const float LAYER_DEPTH_FRONT = 0.9f;
         private readonly IsometricMap map;
-        public bool IsObjectPositioningLayer;
+        public bool IsObjectPositioningLayer { get; private set; } = false;
+        public DenseArray<int> indices { get;}
+        public string Name { get; set; }
 
         public IsometricLayer(int sizex, int sizey, bool isObjectPositioningLayer = false)
         {
@@ -22,13 +25,8 @@ namespace Game.Shared.Components.Map
             map = IsometricMap.Instance;
 
             if (!isObjectPositioningLayer) return;
-            SetAsObjectPositioningLayer();
+                SetAsObjectPositioningLayer();
         }
-
-        public string Name { get; set; }
-        public DenseArray<int> indices { get; }
-
-        public override RectangleF bounds => new RectangleF();
 
         public void SetAsObjectPositioningLayer()
         {
@@ -45,7 +43,7 @@ namespace Game.Shared.Components.Map
                     return Isometric.RENDER_LAYER_START - i;
             throw new Exception($"{OBJECT_POSITIONING_LAYER_NAME} does not exist in tmx file.");
         }
-
+        
         public override bool isVisibleFromCamera(Camera camera)
         {
             //This is the main map class, it will always be drawn unless manually disabled.

@@ -1,5 +1,12 @@
+
 ﻿using Game.Shared.Utility;
+﻿using System;
+using System.Globalization;
+using Game.Shared.Utility;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Nez;
+using Nez.Console;
 
 namespace Game.Shared.Components.Map
 {
@@ -10,10 +17,6 @@ namespace Game.Shared.Components.Map
         public IsometricMapComponent(IsometricMap _map)
         {
             map = _map;
-        }
-
-        public void update()
-        {
         }
 
         public override void onAddedToEntity()
@@ -30,8 +33,13 @@ namespace Game.Shared.Components.Map
 
                 entity.addComponent(map.Layers[i]);
             }
+            
+            map.CalculateOverlapZones(this.entity);
+        }
 
-            map.CalculateOverlapZones(entity);
+        public void update()
+        {
+
         }
     }
 }
