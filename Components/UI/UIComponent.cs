@@ -9,12 +9,13 @@ namespace Game.Shared.Components.UI
         protected UICanvas canvas;
         protected Scene currentScene;
         private ScreenSpaceRenderer renderer;
-        protected Skin skin;
-        protected Table table;
+        public Skin Skin { get; private set; }
+        //The parent element.
+        public Table table { get; set; }
 
         public UIComponent(Skin _skin = null)
         {
-            if (_skin == null) skin = Skin.createDefaultSkin();
+            if (_skin == null) Skin = Skin.createDefaultSkin();
         }
 
         public override void onAddedToEntity()
