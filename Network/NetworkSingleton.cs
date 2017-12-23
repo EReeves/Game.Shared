@@ -40,15 +40,19 @@ namespace Game.Shared.Network
 
         //Delegates
         public delegate void IncomingMessageDelegate(Type sender, NetIncomingMessage message);
-
         public delegate void ConnectionDelegate(Type sender, NetConnection netConenction);
+
+        public delegate void InitializedDelegate(Type networkType);
 
         //Events
         private event IncomingMessageDelegate OnClientMessageReceived;
-
+        //Called on server
         private event IncomingMessageDelegate OnServerMessageReceived;
         public event ConnectionDelegate OnClientConnected;
         public event ConnectionDelegate OnClientDisonnect;
+        
+        //Internal
+        public event InitializedDelegate OnInitialized;
 
         #endregion
 
@@ -194,8 +198,8 @@ namespace Game.Shared.Network
             //Only received when compiled in DEBUG mode.
             var str = message.ReadString();
             str = Enum.GetName(typeof(Type), t) + ": " + str;
-            Debug.log(str);
-            DebugConsole.instance.log(str);
+            Debug.Log(str);
+            DebugConsole.Instance.Log(str);
         }
 
         private static void IncomingMessageTypeDefault(Type t, NetIncomingMessage message)
@@ -205,7 +209,8 @@ namespace Game.Shared.Network
                 var msg = string.Format("Network: Unhandled Message Type: \n\t{0}\n\t{1}",
                     message.MessageType,
                     message.ReadString());
-                Debug.log(msg);
+                Debug.Log(msg);
+                DebugConsole.Instance.Log(msg);
             }
             catch (Exception)
             {
@@ -253,6 +258,7 @@ namespace Game.Shared.Network
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
+            OnInitialized?.Invoke(type);
         }
 
         /// <summary>

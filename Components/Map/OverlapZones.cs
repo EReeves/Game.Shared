@@ -28,14 +28,14 @@ namespace Game.Shared.Components.Map
                 for (var o = 0; o < 4; o++) points[o] = Isometric.WorldToIsometricWorld(points[o], map);
 
                 colliders[i] = new PolygonColliderTrigger(points);
-                colliders[i].setShouldColliderScaleAndRotateWithTransform(false);
-                ent.addComponent(colliders[i]);
+                colliders[i].SetShouldColliderScaleAndRotateWithTransform(false);
+                ent.AddComponent(colliders[i]);
             }
         }
 
         public bool IsBehind(Player p)
         {
-            return colliders.Select(t => t.collidesWith(p.getComponent<BoxCollider>(), out var _)).Any(hit => hit);
+            return colliders.Select(t => t.CollidesWith(p.GetComponent<BoxCollider>(), out var _)).Any(hit => hit);
         }
     }
 }

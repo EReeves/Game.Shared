@@ -29,37 +29,37 @@ namespace Game.Shared.NetworkComponents.PlayerComponent
             Sprite = sprite;
         }
 
-        public override void onAddedToEntity()
+        public override void OnAddedToEntity()
         {
-            Assert.isTrue(Sprite.entity != null && Mover.entity != null, "Components must be added to entity before being passed in.");
-            Sprite.setRenderLayer(IsometricMap.Instance.ObjectRenderLayer);
-            Sprite.setLayerDepth(0);
+            Assert.IsTrue(Sprite.Entity != null && Mover.Entity != null, "Components must be added to entity before being passed in.");
+            Sprite.SetRenderLayer(IsometricMap.Instance.ObjectRenderLayer);
+            Sprite.SetLayerDepth(0);
             var bc = new BoxCollider(32, 32);
-            Mover.addComponent(bc);
-            Mover.getComponent<BoxCollider>().setLocalOffset(new Vector2(0, 16));
+            Mover.AddComponent(bc);
+            Mover.GetComponent<BoxCollider>().SetLocalOffset(new Vector2(0, 16));
 
         }
         
         private void SortRenderDepth()
         {
             var inFront = IsometricMap.Instance.OverlapZones.IsBehind(this);
-           Sprite.setLayerDepth( inFront ? 1 : 0 );
+           Sprite.SetLayerDepth( inFront ? 1 : 0 );
             InFront = inFront;
         }
        
-        public void update()
+        public void Update()
         {
             var speed = 100;
-            if(Input.isKeyDown(Keys.D))
-                velocity += Vector2.UnitX * speed * Time.deltaTime;
-            if(Input.isKeyDown(Keys.A))
-                velocity += -Vector2.UnitX * speed * Time.deltaTime;
-            if(Input.isKeyDown(Keys.W))
-                velocity += -Vector2.UnitY * speed * Time.deltaTime;
-            if(Input.isKeyDown(Keys.S))
-                velocity += Vector2.UnitY * speed * Time.deltaTime;
+            if(Input.IsKeyDown(Keys.D))
+                velocity += Vector2.UnitX * speed * Time.DeltaTime;
+            if(Input.IsKeyDown(Keys.A))
+                velocity += -Vector2.UnitX * speed * Time.DeltaTime;
+            if(Input.IsKeyDown(Keys.W))
+                velocity += -Vector2.UnitY * speed * Time.DeltaTime;
+            if(Input.IsKeyDown(Keys.S))
+                velocity += Vector2.UnitY * speed * Time.DeltaTime;
 
-            Mover.move(velocity, out var result);
+            Mover.Move(velocity, out var result);
             velocity = Vector2.Zero;
             SortRenderDepth();
         }

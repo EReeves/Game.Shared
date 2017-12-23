@@ -1,4 +1,5 @@
-﻿using Nez.UI;
+﻿using Nez;
+using Nez.UI;
 
 namespace Game.Shared.Components.UI
 {

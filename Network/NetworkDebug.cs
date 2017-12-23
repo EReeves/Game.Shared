@@ -44,8 +44,8 @@ namespace Game.Shared.Network
         public static void log(NetworkSingleton.Type t, string fmt, params object[] args)
         {
             var s = string.Format("{0}: {1}", Enum.GetName(typeof(NetworkSingleton.Type), t), string.Format(fmt, args));
-            Debug.log(s);
-            DebugConsole.instance.log(s);
+            Debug.Log(s);
+            DebugConsole.Instance.Log(s);
         }
     }
 }

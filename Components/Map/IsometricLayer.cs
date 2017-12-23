@@ -31,8 +31,8 @@ namespace Game.Shared.Components.Map
         public void SetAsObjectPositioningLayer()
         {
             IsObjectPositioningLayer = true;
-            setRenderLayer(map.ObjectRenderLayer);
-            setLayerDepth(LAYER_DEPTH_OBJFRONT);
+            SetRenderLayer(map.ObjectRenderLayer);
+            SetLayerDepth(LAYER_DEPTH_OBJFRONT);
         }
 
         public static int ObjectRenderLayerPosition(IList<IsometricLayer> list)
@@ -44,13 +44,13 @@ namespace Game.Shared.Components.Map
             throw new Exception($"{OBJECT_POSITIONING_LAYER_NAME} does not exist in tmx file.");
         }
         
-        public override bool isVisibleFromCamera(Camera camera)
+        public override bool IsVisibleFromCamera(Camera camera)
         {
             //This is the main map class, it will always be drawn unless manually disabled.
             return true;
         }
 
-        public override void render(Graphics graphics, Camera camera)
+        public override void Render(Graphics graphics, Camera camera)
         {
             for (var y = 1; y <= map.Height; y++)
             for (var x = 1; x <= map.Width; x++)
@@ -66,10 +66,10 @@ namespace Game.Shared.Components.Map
                     Isometric.IsometricToWorld(new Point(x - 1, y - 1), map); //Isometric Projection to world coords.
 
                 //Culling 
-                if (worldpos.X > camera.bounds.x + camera.bounds.width || //Right side
-                    worldpos.Y > camera.bounds.y + camera.bounds.height || //Bottom
-                    worldpos.X < camera.bounds.x - map.LargestTileSize.X || //Left
-                    worldpos.Y < camera.bounds.y - map.LargestTileSize.Y) //Top
+                if (worldpos.X > camera.Bounds.X + camera.Bounds.Width || //Right side
+                    worldpos.Y > camera.Bounds.Y + camera.Bounds.Height || //Bottom
+                    worldpos.X < camera.Bounds.X - map.LargestTileSize.X || //Left
+                    worldpos.Y < camera.Bounds.Y - map.LargestTileSize.Y) //Top
                     continue; //Don't draw l
 
 
@@ -83,7 +83,7 @@ namespace Game.Shared.Components.Map
                 };
 
                 //Finally draw.
-                graphics.batcher.draw(tileset.Texture, worldpos, sourceRect, Color.White, 0, new Vector2(0, 0), 1,
+                graphics.Batcher.Draw(tileset.Texture, worldpos, sourceRect, Color.White, 0, new Vector2(0, 0), 1,
                     SpriteEffects.None, 0);
             }
         }

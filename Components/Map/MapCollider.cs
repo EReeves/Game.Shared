@@ -7,14 +7,12 @@ namespace Game.Shared.Components
 {
     internal class MapCollider
     {
-        private readonly IsometricMap map;
-        public PolygonCollider[] colliders;
+        public readonly PolygonCollider[] Colliders;
 
-        public MapCollider(IsometricMap _map)
+        public MapCollider(IsometricMap map)
         {
-            map = _map;
             var collidersGroup = map.ObjectGroups["Colliders"];
-            colliders = new PolygonCollider[collidersGroup.Count];
+            Colliders = new PolygonCollider[collidersGroup.Count];
 
             for (var i = 0; i < collidersGroup.Count; i++)
             {
@@ -28,8 +26,9 @@ namespace Game.Shared.Components
 
                 for (var o = 0; o < 4; o++) points[o] = Isometric.WorldToIsometricWorld(points[o], map);
 
-                colliders[i] = new PolygonCollider(points);
-                colliders[i].setShouldColliderScaleAndRotateWithTransform(true);
+                Colliders[i] = new PolygonCollider(points);
+              
+                Colliders[i].SetShouldColliderScaleAndRotateWithTransform(true);
                 //entity.addComponent<BoxCollider>(colliders[i]);
             }
         }

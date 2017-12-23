@@ -56,7 +56,7 @@ namespace Game.Shared.Components.Map
 
         public void LoadTextures(ContentManager content)
         {
-            Assert.isTrue(tilesetsSorted,
+            Assert.IsTrue(tilesetsSorted,
                 "Tilesets must be sorted before they can be used. See IsometricMap.SortTilesets()");
             Tileset.LoadTextures(content, Tilesets);
         }

@@ -1,5 +1,5 @@
-
-﻿using Game.Shared.Utility;
+﻿
+ using Game.Shared.Utility;
 ﻿using System;
 using System.Globalization;
 using Game.Shared.Utility;
@@ -19,7 +19,7 @@ namespace Game.Shared.Components.Map
             map = _map;
         }
 
-        public override void onAddedToEntity()
+        public override void OnAddedToEntity()
         {
             //Add sub components.
             for (var i = 0; i < map.Layers.Count; i++)
@@ -27,17 +27,17 @@ namespace Game.Shared.Components.Map
                 //Set render layer before adding.
                 var layer = Isometric.RENDER_LAYER_START - i;
                 if (layer > map.ObjectRenderLayer && layer < map.ObjectRenderLayerEnd)
-                    map.Layers[i].setRenderLayer(layer);
+                    map.Layers[i].SetRenderLayer(layer);
                 else
                     map.Layers[i].SetAsObjectPositioningLayer();
 
-                entity.addComponent(map.Layers[i]);
+                Entity.AddComponent(map.Layers[i]);
             }
             
-            map.CalculateOverlapZones(this.entity);
+            map.CalculateOverlapZones(this.Entity);
         }
 
-        public void update()
+        public void Update()
         {
 
         }

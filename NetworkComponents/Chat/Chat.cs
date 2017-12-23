@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Game.Shared.Network;
 using Game.Shared.NetworkComponents.PlayerComponent;
 using Game.Shared.Utility;
@@ -9,6 +10,10 @@ namespace Game.Shared.NetworkComponents.Chat
 {
     public class Chat : NetworkComponent
     {
+        public delegate void ChatMessageDelegate(ChatMessage message);
+
+        public event ChatMessageDelegate ClientOnMessageReceived;
+        
         public enum Channel : ushort
         {
             Public = 1,
@@ -20,6 +25,7 @@ namespace Game.Shared.NetworkComponents.Chat
         }
 
         private readonly FixedSizedQueue<ChatMessage> messageQueue = new FixedSizedQueue<ChatMessage>(255);
+        StringBuilder stringBuilder = new StringBuilder();
 
         public Chat()
         {
@@ -62,12 +68,16 @@ namespace Game.Shared.NetworkComponents.Chat
 
             //Client receive message.
             if (receiverType == NetworkSingleton.Type.Client)
-                DebugConsole.instance.log(msg);
+            {
+                DebugConsole.Instance.Log(msg);
+                ClientOnMessageReceived?.Invoke(msg);
+            }
+                
 
             //Server received message
             if (receiverType != NetworkSingleton.Type.Server) return;
 
-            DebugConsole.instance.log(msg);
+            DebugConsole.Instance.Log(msg);
 
             if (msg.Channel >= (ushort) Channel.Private) //Private channel
             {
@@ -89,7 +99,7 @@ namespace Game.Shared.NetworkComponents.Chat
                     //TODO:Get clients in whisper distance and send.
                     break;
                 default:
-                    DebugConsole.instance.log("Chat channel not supported: " + msg.Channel);
+                    DebugConsole.Instance.Log("Chat channel not supported: " + msg.Channel);
                     break;
             }
         }
@@ -100,6 +110,16 @@ namespace Game.Shared.NetworkComponents.Chat
             var channel = DataCompress.TwoBytesToUShort(message.Sender, p.Id);
             message.Channel = channel;
             SendMessage(message);
+        }
+
+        public override string ToString()
+        {
+            stringBuilder.Clear();
+            foreach (var chatMessage in messageQueue)
+            {
+                stringBuilder.AppendLine(chatMessage.ToString());
+            }
+            return stringBuilder.ToString();
         }
     }
 }

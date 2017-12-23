@@ -26,7 +26,7 @@ namespace Game.Shared.NetworkComponents.Chat
 
         public override string ToString()
         {
-            return string.Format("chat:{0}:{1}:{2}", Channel, Sender, Message);
+            return $"chat:{Channel}:{Sender}:{Message}";
         }
     }
 }

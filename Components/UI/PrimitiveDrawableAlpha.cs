@@ -9,16 +9,16 @@ namespace Game.Shared.Components.UI
 
         public PrimitiveDrawableAlpha(Color col)
         {
-            this.color = col;
+            this.Color = col;
             
         }
-        public override void draw(Graphics graphics, float x, float y, float width, float height, Color color)
+        public override void Draw(Graphics graphics, float x, float y, float width, float height, Color color)
         {
-            var col = this.color.HasValue ? this.color.Value : color;
-            if (useFilledRect)
-                graphics.batcher.drawRect(x, y, width, height, col);
+            var col = this.Color.HasValue ? this.Color.Value : color;
+            if (UseFilledRect)
+                graphics.Batcher.DrawRect(x, y, width, height, col);
             else
-                graphics.batcher.drawHollowRect(x, y, width, height, col);
+                graphics.Batcher.DrawHollowRect(x, y, width, height, col);
         }
     }
 }

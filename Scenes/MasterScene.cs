@@ -1,12 +1,16 @@
 ﻿#define DESKTOP
 using System;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Xml.Schema;
 using Game.Shared.Components;
 using Game.Shared.Components.Map;
 using Game.Shared.Components.UI;
+using Game.Shared.Network;
+using Game.Shared.NetworkComponents.Chat;
 using Game.Shared.NetworkComponents.PlayerComponent;
 using Game.Shared.Utility;
+using Lidgren.Network;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -22,13 +26,14 @@ namespace Game.Shared.Scenes
         private IsometricMapComponent isometricMapComponent;
         private IsometricMap map;
         private Player p;
-
         private Sprite s;
-        private UIComponent uiComponent;
-        private Entity uiEntity;
 
         private Skin uiSkin;
 
+        private Chat networkChat;
+
+        private UIContainer _UIContainer = new UIContainer();
+        
         public MasterScene(Skin skin = null)
         {
             uiSkin = skin;
@@ -36,87 +41,107 @@ namespace Game.Shared.Scenes
 
         public Action LoadAction { get; set; }
 
-        public override void initialize()
+        public override void Initialize()
         {
-            clearColor = Color.CornflowerBlue;
+            ClearColor = Color.CornflowerBlue;
             var renderer = new RenderLayerExcludeRenderer(1, UIComponent.UI_RENDER_LAYER);
-            addRenderer(renderer);
+            AddRenderer(renderer);
 
 
             //           var map = content.Load<TmxMap>("Map/untitled");
-            var tiledEntity = createEntity("mapEntity");
+            var tiledEntity = CreateEntity("mapEntity");
 
             Benchmark.Go(() =>
             {
-                map = content.Load("/Map/untitled.tmx");
+                map = Content.Load("/Map/untitled.tmx");
 
                 isometricMapComponent = new IsometricMapComponent(map);
-                tiledEntity.addComponent(isometricMapComponent);
+                tiledEntity.AddComponent(isometricMapComponent);
             });
 
-            
+            NetworkSingleton.Instance.OnInitialized += OnNetworkInitialized;
+            NetworkSingleton.Instance.OnClientConnected += OnClientConnected;
 
-            var plyE = createEntity("plyer");
+            var plyE = CreateEntity("plyer");
             
-            var txt2d = content.Load<Texture2D>("player");
-            s = new Sprite(txt2d);
+            var txt2d = Content.Load<Texture2D>("player");
+            var s = new Sprite(txt2d);
             var mover = new Mover();
 
-            plyE.position = new Vector2(200, 200);
+            plyE.Position = new Vector2(200, 200);
             
             p = new Player(mover, s);
-            plyE.addComponent(s);
-            plyE.addComponent(mover);
-            plyE.addComponent(p);
+            plyE.AddComponent(s);
+            plyE.AddComponent(mover);
+            plyE.AddComponent(p);
 
-            var ef = content.loadEffect("Content/src/tint.mgfxo");
+            var ef = Content.LoadEffect("Content/src/tint.mgfxo");
             ef.Parameters["Color"].SetValue(new Vector3(0.3f,0.3f,0.8f));          
             ef.Parameters["ColorAmount"].SetValue(1f);
    
-            s.material = new Material(BlendState.AlphaBlend,ef);
+            s.Material = new Material(BlendState.AlphaBlend,ef);
             //ef.CurrentTechnique.Passes[0].Apply();
-            plyE.position = new Vector2(200,200);
-
-           
-            
+            plyE.Position = new Vector2(200,200);        
             
    
-            colliderEntity = createEntity("collider");
+            colliderEntity = CreateEntity("collider");
             var collider = new MapCollider(map);
-            for (var i = 0; i < collider.colliders.Length; i++) colliderEntity.addComponent(collider.colliders[i]);
+            foreach (var t in collider.Colliders)
+                colliderEntity.AddComponent(t);
 
-            camera.setPosition(new Vector2(100, 200));
+            Camera.SetPosition(new Vector2(100, 200));
             //camera.transform.setPosition(spawn.x+camera.bounds.width/4, spawn.y-camera.bounds.height/1.5f);
 
-            uiComponent = new T();
-            uiEntity = createEntity("UIEntity");
-            uiEntity.addComponent(uiComponent);
+            UISetUp();
         }
 
-        public override void update()
+        private void OnClientConnected(NetworkSingleton.Type sender, NetConnection netconenction)
         {
-            debugmove();
-     
-            base.update();
+            var msg = new ChatMessage(p,"Hello there", Chat.Channel.Public);
+            networkChat.SendMessage(msg);
+        }
+
+        public void UISetUp()
+        {
+            _UIContainer.Component = new T();
+            _UIContainer.Entity = CreateEntity("UIEntity");
+            _UIContainer.Entity.AddComponent(_UIContainer.Component);
+        }
+
+        private void OnNetworkInitialized(NetworkSingleton.Type networkType)
+        {
+            networkChat = new Chat();
+            var chatUI = _UIContainer.Component.GetSubUI<IChatUI>();
+
+            networkChat.ClientOnMessageReceived += message =>
+            {
+                chatUI.SetChatText(networkChat.ToString());
+            };  
+        }
+
+        public override void Update()
+        {
+            debugmove();    
+            base.Update();
         }
 
         private void debugmove()
         {
-            var speed = 400f * Time.deltaTime;
+            var speed = 400f * Time.DeltaTime;
 
-            if (Input.isKeyDown(Keys.Up))
-                camera.setPosition(camera.position + new Vector2(0, -speed));
-            if (Input.isKeyDown(Keys.Down))
-                camera.setPosition(camera.position + new Vector2(0, speed));
+            if (Input.IsKeyDown(Keys.Up))
+                Camera.SetPosition(Camera.Position + new Vector2(0, -speed));
+            if (Input.IsKeyDown(Keys.Down))
+                Camera.SetPosition(Camera.Position + new Vector2(0, speed));
 
 
-            if (Input.isKeyDown(Keys.Left))
-                camera.setPosition(camera.position + new Vector2(-speed, 0));
+            if (Input.IsKeyDown(Keys.Left))
+                Camera.SetPosition(Camera.Position + new Vector2(-speed, 0));
 
-            if (Input.isKeyDown(Keys.Right))
-                camera.setPosition(camera.position + new Vector2(speed, 0));
+            if (Input.IsKeyDown(Keys.Right))
+                Camera.SetPosition(Camera.Position + new Vector2(speed, 0));
 
-            base.update();
+            base.Update();
         }
     }
 }

@@ -65,9 +65,12 @@
     <Compile Include="Components\Map\TiledObject.cs" />
     <Compile Include="Components\Map\TiledParser.cs" />
     <Compile Include="Components\Map\Tileset.cs" />
+    <Compile Include="Components\UI\IChatUI.cs" />
     <Compile Include="Components\UI\ISubUI.cs" />
     <Compile Include="Components\UI\PrimitiveDrawableAlpha.cs" />
+    <Compile Include="Components\UI\SubUIBase.cs" />
     <Compile Include="Components\UI\UIComponent.cs" />
+    <Compile Include="Components\UI\UIContainer.cs" />
     <Compile Include="NetworkComponents\Chat\ChatMessage.cs" />
     <Compile Include="NetworkComponents\NetworkComponent.cs" />
     <Compile Include="NetworkComponents\PlayerComponent\Player.cs" />
