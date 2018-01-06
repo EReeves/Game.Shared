@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Game.Shared.Components.Map
 {
@@ -23,6 +24,20 @@ namespace Game.Shared.Components.Map
         public void AddObjectToEnd(TiledObject value)
         {
             this[lastKey].Add(value);
+        }
+
+        public TiledObject ObjectAtEnd()
+        {
+            if (Count == 0) return null;
+            return this[lastKey].Last();
+        }
+    }
+
+    public static class ObjectGroupExtensions
+    {
+        public static TiledObject GetTiledObject(this List<TiledObject> list, string name)
+        {
+            return list.First(a => a.Name.Equals(name));
         }
     }
 }

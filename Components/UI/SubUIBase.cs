@@ -2,16 +2,21 @@
 
 namespace Game.Shared.Components.UI
 {
+    /// <inheritdoc />
+    /// <summary>
+    /// Most UI should derive from this class.
+    /// Is added to a UIComponent as a SubUI.
+    /// </summary>
     public abstract class SubUIBase : ISubUI
     {
-        public UIComponent parent { get; set; }
-        public Element element { get; set; }
-        
-        public virtual void RegisterSubUI(UIComponent _parent, Element _element = null)
+        public UIComponent UI { get; set; }
+        public Element Element { get; set; }
+
+        public virtual void RegisterSubUI(UIComponent ui, Element element = null)
         {
-            parent = _parent;
-            element = _element;
-            parent.SubUI.Add(this);
+            UI = ui;
+            Element = element;
+            UI.SubUI.Add(this);
         }
     }
 }

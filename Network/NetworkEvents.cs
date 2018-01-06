@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using Lidgren.Network;
 using ProtoBuf;
 
@@ -19,13 +20,13 @@ namespace Game.Shared.Network
         /// </summary>
         /// <param name="message"></param>
         /// <param name="ev"></param>
-        /// <param name="receiverType"></param>
+        /// <param name="receiverPeerType"></param>
         /// <param name="callback"></param>
-        public static void RunEvent(this NetIncomingMessage message, Event ev, NetworkSingleton.Type receiverType,
+        public static void RunEvent(this NetIncomingMessage message, Event ev, NetworkSingleton.PeerType receiverPeerType,
             NetworkSingleton.IncomingMessageDelegate callback)
         {
             if ((Event) message.ReadUInt32() == ev)
-                callback.Invoke(receiverType, message);
+                callback.Invoke(receiverPeerType, message);
         }
 
         /// <summary>
@@ -50,11 +51,18 @@ namespace Game.Shared.Network
         /// <typeparam name="T"></typeparam>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static T DeserializeToEvent<T>(this byte[] bytes) //Where T has attribute ProtoContract
+        public static T DeserializeEventData<T>(this byte[] bytes) //Where T has attribute ProtoContract
         {
-            var stream = new MemoryStream(bytes, sizeof(uint), bytes.Length - sizeof(uint));
+            var stream = new MemoryStream(bytes);
             var ne = Serializer.Deserialize<T>(stream);
             return ne;
+        }
+
+        public static byte[] ReadDataBytes(this NetIncomingMessage msg)
+        {
+            const int size = sizeof(uint);
+            msg.Position = size * 8; //Set buffer position in bits.
+            return msg.ReadBytes(msg.LengthBytes - size);
         }
     }
 }

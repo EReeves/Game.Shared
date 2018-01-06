@@ -1,8 +1,5 @@
 ﻿#define DESKTOP
 using System;
-using System.Globalization;
-using System.Net.Http.Headers;
-using System.Xml.Schema;
 using Game.Shared.Components;
 using Game.Shared.Components.Map;
 using Game.Shared.Components.UI;
@@ -25,15 +22,18 @@ namespace Game.Shared.Scenes
         private Entity colliderEntity;
         private IsometricMapComponent isometricMapComponent;
         private IsometricMap map;
+
+        private Chat networkChat;
         private Player p;
         private Sprite s;
 
+        private PlayerFactory players;
+        private Player localPlayer;
+
+        private readonly UIContainer uiContainer = new UIContainer();
+
         private Skin uiSkin;
 
-        private Chat networkChat;
-
-        private UIContainer _UIContainer = new UIContainer();
-        
         public MasterScene(Skin skin = null)
         {
             uiSkin = skin;
@@ -44,7 +44,7 @@ namespace Game.Shared.Scenes
         public override void Initialize()
         {
             ClearColor = Color.CornflowerBlue;
-            var renderer = new RenderLayerExcludeRenderer(1, UIComponent.UI_RENDER_LAYER);
+            var renderer = new RenderLayerExcludeRenderer(1, UIComponent.UIRenderLayer);
             AddRenderer(renderer);
 
 
@@ -62,70 +62,70 @@ namespace Game.Shared.Scenes
             NetworkSingleton.Instance.OnInitialized += OnNetworkInitialized;
             NetworkSingleton.Instance.OnClientConnected += OnClientConnected;
 
-            var plyE = CreateEntity("plyer");
-            
-            var txt2d = Content.Load<Texture2D>("player");
-            var s = new Sprite(txt2d);
-            var mover = new Mover();
-
-            plyE.Position = new Vector2(200, 200);
-            
-            p = new Player(mover, s);
-            plyE.AddComponent(s);
-            plyE.AddComponent(mover);
-            plyE.AddComponent(p);
-
-            var ef = Content.LoadEffect("Content/src/tint.mgfxo");
-            ef.Parameters["Color"].SetValue(new Vector3(0.3f,0.3f,0.8f));          
-            ef.Parameters["ColorAmount"].SetValue(1f);
+       var txt2D = Content.Load<Texture2D>("player");
+            players = new PlayerFactory(this, 10, txt2D);
    
-            s.Material = new Material(BlendState.AlphaBlend,ef);
-            //ef.CurrentTechnique.Passes[0].Apply();
-            plyE.Position = new Vector2(200,200);        
-            
-   
+
             colliderEntity = CreateEntity("collider");
             var collider = new MapCollider(map);
             foreach (var t in collider.Colliders)
                 colliderEntity.AddComponent(t);
 
-            Camera.SetPosition(new Vector2(100, 200));
+            var spawnObject = map.ObjectGroups["Objects"].GetTiledObject("spawn");
+            Camera.SetPosition(spawnObject.WorldPosition);
             //camera.transform.setPosition(spawn.x+camera.bounds.width/4, spawn.y-camera.bounds.height/1.5f);
 
             UISetUp();
+            
+            
+
         }
 
-        private void OnClientConnected(NetworkSingleton.Type sender, NetConnection netconenction)
+        private void OnClientConnected(NetworkSingleton.PeerType sender, NetConnection netconenction)
         {
-            var msg = new ChatMessage(p,"Hello there", Chat.Channel.Public);
-            networkChat.SendMessage(msg);
+            var player = players.CreatePlayer(sender, netconenction);
+            
+            if (player == null) return;
+            //Set player position if local
+            if (!player.IsRemote)
+            {
+                var spawnObject = map.ObjectGroups["Objects"].GetTiledObject("spawn");
+                var pos = new Vector2
+                {
+                    X = spawnObject.WorldPosition.X,
+                    Y = spawnObject.WorldPosition.Y
+                };
+                player.Entity.SetPosition(pos);
+            }
         }
 
         public void UISetUp()
         {
-            _UIContainer.Component = new T();
-            _UIContainer.Entity = CreateEntity("UIEntity");
-            _UIContainer.Entity.AddComponent(_UIContainer.Component);
+            uiContainer.Component = new T();
+            uiContainer.Entity = CreateEntity("UIEntity");
+            uiContainer.Entity.AddComponent(uiContainer.Component);
         }
 
-        private void OnNetworkInitialized(NetworkSingleton.Type networkType)
+        private void OnNetworkInitialized(NetworkSingleton.PeerType networkPeerType)
         {
             networkChat = new Chat();
-            var chatUI = _UIContainer.Component.GetSubUI<IChatUI>();
+            var chatUI = uiContainer.Component.GetSubUI<IChatUI>();
 
-            networkChat.ClientOnMessageReceived += message =>
+            networkChat.ClientOnMessageReceived += message => { chatUI.SetChatText(networkChat.ToString()); };
+
+            chatUI.OnChatSubmitted += (sender, message) =>
             {
-                chatUI.SetChatText(networkChat.ToString());
-            };  
+                networkChat.SendMessage(new ChatMessage(players.ClientPlayer, message, Chat.Channel.Public));
+            };
         }
 
         public override void Update()
         {
-            debugmove();    
+            Debugmove();
             base.Update();
         }
 
-        private void debugmove()
+        private void Debugmove()
         {
             var speed = 400f * Time.DeltaTime;
 
@@ -140,8 +140,6 @@ namespace Game.Shared.Scenes
 
             if (Input.IsKeyDown(Keys.Right))
                 Camera.SetPosition(Camera.Position + new Vector2(speed, 0));
-
-            base.Update();
         }
     }
 }

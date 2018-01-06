@@ -4,11 +4,11 @@ namespace Game.Shared.NetworkComponents
 {
     public class NetworkComponent
     {
-        protected NetworkSingleton network;
+        protected NetworkSingleton Network;
 
         public NetworkComponent()
         {
-            network = NetworkSingleton.Instance;
+            Network = NetworkSingleton.Instance;
         }
     }
 }

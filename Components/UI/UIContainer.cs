@@ -3,8 +3,8 @@
 namespace Game.Shared.Components.UI
 {
     /// <summary>
-    /// Clean up the scene class a bit.
-    /// Has slots for all the UI elements and related elements.
+    ///     Clean up the scene class a bit.
+    ///     Has slots for all the UI elements and related elements.
     /// </summary>
     public class UIContainer
     {

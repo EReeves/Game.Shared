@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Game.Shared.NetworkComponents.PlayerComponent;
 using Game.Shared.Utility;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,40 +9,56 @@ namespace Game.Shared.Components.Map
 {
     public class IsometricLayer : RenderableComponent
     {
-        public const float LAYER_DEPTH_BACK = 0f;
-        public const float LAYER_DEPTH_OBJBACK = 0.3f;
-        public const float LAYER_DEPTH_OBJFRONT = 0.6f;
-        public const float LAYER_DEPTH_FRONT = 0.9f;
+        public const float LayerDepthBack = 0f;
+        public const float LayerDepthObjback = 0.3f;
+        public const float LayerDepthObjfront = 0.4f;
+        public const float LayerDepthFront = 0.9f;
         private readonly IsometricMap map;
-        public bool IsObjectPositioningLayer { get; private set; } = false;
-        public DenseArray<int> indices { get;}
-        public string Name { get; set; }
+        
+        public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
 
         public IsometricLayer(int sizex, int sizey, bool isObjectPositioningLayer = false)
         {
-            indices = new DenseArray<int>(sizey, sizex);
+            Indices = new DenseArray<int>(sizey, sizex);
             map = IsometricMap.Instance;
 
-            if (!isObjectPositioningLayer) return;
+            if (isObjectPositioningLayer)
                 SetAsObjectPositioningLayer();
+            
         }
+
+        public bool IsObjectPositioningLayer { get; private set; }
+        public DenseArray<int> Indices { get; }
+        public string Name { get; set; }
 
         public void SetAsObjectPositioningLayer()
         {
             IsObjectPositioningLayer = true;
             SetRenderLayer(map.ObjectRenderLayer);
-            SetLayerDepth(LAYER_DEPTH_OBJFRONT);
+            SetLayerDepth(LayerDepthObjfront);
+        }
+
+        /// <summary>
+        /// Should be run after layer is populated, will replace layer depth with specified value if specified.
+        /// </summary>
+        public void CheckForPropertyDepth()
+        {
+            if (Properties.TryGetValue("depth", out var depth))
+            {
+                float.TryParse(depth, out var floatValue);
+                SetLayerDepth(floatValue);
+            }
         }
 
         public static int ObjectRenderLayerPosition(IList<IsometricLayer> list)
         {
-            const string OBJECT_POSITIONING_LAYER_NAME = "ObjectPositioningLayer";
+            const string objectPositioningLayerName = "ObjectPositioningLayer";
             for (var i = 0; i < list.Count; i++)
-                if (list[i].Name == OBJECT_POSITIONING_LAYER_NAME)
-                    return Isometric.RENDER_LAYER_START - i;
-            throw new Exception($"{OBJECT_POSITIONING_LAYER_NAME} does not exist in tmx file.");
+                if (list[i].Name == objectPositioningLayerName)
+                    return Isometric.RenderLayerStart - i;
+            throw new Exception($"{objectPositioningLayerName} does not exist in tmx file.");
         }
-        
+
         public override bool IsVisibleFromCamera(Camera camera)
         {
             //This is the main map class, it will always be drawn unless manually disabled.
@@ -55,7 +70,8 @@ namespace Game.Shared.Components.Map
             for (var y = 1; y <= map.Height; y++)
             for (var x = 1; x <= map.Width; x++)
             {
-                var index = indices[x - 1, y - 1]; //-1 because indices are zero indexed.
+          
+                var index = Indices[x - 1, y - 1]; //-1 because indices are zero indexed.
                 var tileset = Tileset.TilesetForPosition(index, map.Tilesets); //Tileset the index belongs to.
 
                 var subTexturePosition =
@@ -73,18 +89,19 @@ namespace Game.Shared.Components.Map
                     continue; //Don't draw l
 
 
-                var sourceRect = new Rectangle //Subposition in texture.
+                var columnRounding = subTexturePosition % tileset.Columns;
+                var sourceRect = new RectangleF //Subposition in texture.
                 {
-                    X = subTexturePosition * tileset.TileWidth,
-                    Y = (int) (Math.Floor(subTexturePosition / (double) tileset.Columns) *
-                               tileset.TileHeight), //Y needs rounding.
+                    X = (columnRounding * tileset.TileWidth),
+                    Y = (subTexturePosition / tileset.Columns) *
+                               tileset.TileHeight, //Y needs rounding.
                     Width = tileset.TileWidth,
                     Height = tileset.TileHeight
                 };
 
                 //Finally draw.
-                graphics.Batcher.Draw(tileset.Texture, worldpos, sourceRect, Color.White, 0, new Vector2(0, 0), 1,
-                    SpriteEffects.None, 0);
+                graphics.Batcher.Draw(tileset.Texture, worldpos, sourceRect, Color.White, 0, new Vector2(0, 0), 1,SpriteEffects.None, 0);
+                
             }
         }
     }

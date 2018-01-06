@@ -56,6 +56,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Components\Inventory\IInventoryItem.cs" />
+    <Compile Include="Components\Inventory\Inventory.cs" />
+    <Compile Include="Components\Inventory\BaseInventoryItem.cs" />
     <Compile Include="Components\Map\IsometricLayer.cs" />
     <Compile Include="Components\Map\IsometricMap.cs" />
     <Compile Include="Components\Map\MapCollider.cs" />
@@ -64,8 +67,10 @@
     <Compile Include="Components\Map\OverlapZones.cs" />
     <Compile Include="Components\Map\TiledObject.cs" />
     <Compile Include="Components\Map\TiledParser.cs" />
+    <Compile Include="Components\Map\TileProperties.cs" />
     <Compile Include="Components\Map\Tileset.cs" />
     <Compile Include="Components\UI\IChatUI.cs" />
+    <Compile Include="Components\UI\IInterfaceUI.cs" />
     <Compile Include="Components\UI\ISubUI.cs" />
     <Compile Include="Components\UI\PrimitiveDrawableAlpha.cs" />
     <Compile Include="Components\UI\SubUIBase.cs" />
@@ -74,9 +79,8 @@
     <Compile Include="NetworkComponents\Chat\ChatMessage.cs" />
     <Compile Include="NetworkComponents\NetworkComponent.cs" />
     <Compile Include="NetworkComponents\PlayerComponent\Player.cs" />
-    <Compile Include="NetworkComponents\PlayerComponent\PlayerList.cs" />
+    <Compile Include="NetworkComponents\PlayerComponent\PlayerFactory.cs" />
     <Compile Include="Network\Client.cs" />
-    <Compile Include="Network\NetworkDebug.cs" />
     <Compile Include="Network\NetworkEvents.cs" />
     <Compile Include="Network\NetworkSingleton.cs" />
     <Compile Include="NetworkComponents\Chat\Chat.cs" />

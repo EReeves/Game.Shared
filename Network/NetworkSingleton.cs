@@ -14,14 +14,14 @@ namespace Game.Shared.Network
         #region State
 
         //State
-        public enum Type
+        public enum PeerType
         {
             Client,
             Server,
             Both
         }
 
-        private Type type;
+        public PeerType LocalPeerType { get; private set; }
 
         #endregion
 
@@ -39,18 +39,21 @@ namespace Game.Shared.Network
         #region Events and Delegates
 
         //Delegates
-        public delegate void IncomingMessageDelegate(Type sender, NetIncomingMessage message);
-        public delegate void ConnectionDelegate(Type sender, NetConnection netConenction);
+        public delegate void IncomingMessageDelegate(PeerType sender, NetIncomingMessage message);
 
-        public delegate void InitializedDelegate(Type networkType);
+        public delegate void ConnectionDelegate(PeerType sender, NetConnection netConenction);
+
+        public delegate void InitializedDelegate(PeerType networkPeerType);
 
         //Events
         private event IncomingMessageDelegate OnClientMessageReceived;
+
         //Called on server
         private event IncomingMessageDelegate OnServerMessageReceived;
+
         public event ConnectionDelegate OnClientConnected;
         public event ConnectionDelegate OnClientDisonnect;
-        
+
         //Internal
         public event InitializedDelegate OnInitialized;
 
@@ -84,15 +87,15 @@ namespace Game.Shared.Network
         /// <param name="recipient">event Received by Client or Server?</param>
         /// <param name="e"></param>
         /// <param name="callback"></param>
-        public void AddIncomingEventHandler(Type recipient, NetworkEvents.Event e, IncomingMessageDelegate callback)
+        public void AddIncomingEventHandler(PeerType recipient, NetworkEvents.Event e, IncomingMessageDelegate callback)
         {
             switch (recipient)
             {
-                case Type.Server:
-                    OnClientMessageReceived += (s, message) => { message.RunEvent(e, Type.Client, callback); };
+                case PeerType.Server:
+                    OnClientMessageReceived += (s, message) => { message.RunEvent(e, PeerType.Client, callback); };
                     break;
-                case Type.Client:
-                    OnServerMessageReceived += (s, message) => { message.RunEvent(e, Type.Server, callback); };
+                case PeerType.Client:
+                    OnServerMessageReceived += (s, message) => { message.RunEvent(e, PeerType.Server, callback); };
                     break;
             }
         }
@@ -155,13 +158,13 @@ namespace Game.Shared.Network
         #region Strategy Implementation
 
         //Stores an action to be run over a specific message type. 
-        private Dictionary<NetIncomingMessageType, Action<Type, NetIncomingMessage>> messageLoopActions;
+        private Dictionary<NetIncomingMessageType, Action<PeerType, NetIncomingMessage>> messageLoopActions;
 
         private void InitializeMessageLoopActions()
         {
             //Set actions linked to incoming messages.
             messageLoopActions =
-                new Dictionary<NetIncomingMessageType, Action<Type, NetIncomingMessage>>
+                new Dictionary<NetIncomingMessageType, Action<PeerType, NetIncomingMessage>>
                 {
                     {NetIncomingMessageType.Data, IncomingMessageTypeData},
                     {NetIncomingMessageType.StatusChanged, IncomingMessageTypeStatusChanged},
@@ -169,17 +172,17 @@ namespace Game.Shared.Network
                 };
         }
 
-        private void IncomingMessageTypeData(Type receiver, NetIncomingMessage message)
+        private void IncomingMessageTypeData(PeerType receiver, NetIncomingMessage message)
         {
-            if (receiver == Type.Client)
+            if (receiver == PeerType.Client)
                 OnServerMessageReceived?.Invoke(receiver, message);
-            else if (receiver == Type.Server)
+            else if (receiver == PeerType.Server)
                 OnClientMessageReceived?.Invoke(receiver, message);
             else
                 throw new ArgumentOutOfRangeException(nameof(receiver), "Invalid NetPeer class.");
         }
 
-        private void IncomingMessageTypeStatusChanged(Type t, NetIncomingMessage message)
+        private void IncomingMessageTypeStatusChanged(PeerType t, NetIncomingMessage message)
         {
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (message.SenderConnection.Status)
@@ -193,16 +196,16 @@ namespace Game.Shared.Network
             }
         }
 
-        private static void IncomingMessageTypeDebugMessage(Type t, NetIncomingMessage message)
+        private static void IncomingMessageTypeDebugMessage(PeerType t, NetIncomingMessage message)
         {
             //Only received when compiled in DEBUG mode.
             var str = message.ReadString();
-            str = Enum.GetName(typeof(Type), t) + ": " + str;
+            str = Enum.GetName(typeof(PeerType), t) + ": " + str;
             Debug.Log(str);
             DebugConsole.Instance.Log(str);
         }
 
-        private static void IncomingMessageTypeDefault(Type t, NetIncomingMessage message)
+        private static void IncomingMessageTypeDefault(PeerType t, NetIncomingMessage message)
         {
             try
             {
@@ -225,27 +228,27 @@ namespace Game.Shared.Network
         /// <summary>
         ///     Initializes the network classes, but doesn't establish connection.
         /// </summary>
-        /// <param name="_type">Client, Server or Both.</param>
+        /// <param name="peerType">Client, Server or Both.</param>
         /// <param name="port"></param>
-        public void InitNetwork(Type _type, int? port = null)
+        public void InitNetwork(PeerType peerType, int? port = 1777)
         {
             InitializeMessageLoopActions();
-            type = _type;
+            this.LocalPeerType = peerType;
 
-            switch (type)
+            switch (this.LocalPeerType)
             {
-                case Type.Client:
+                case PeerType.Client:
                     var npConfig = new NetPeerConfiguration(AppName);
                     client = new NetClient(npConfig);
                     break;
 
-                case Type.Server:
+                case PeerType.Server:
                     serverConfiguration = new NetPeerConfiguration(AppName);
                     if (port != null) serverConfiguration.Port = (int) port;
                     server = new NetServer(serverConfiguration);
                     break;
 
-                case Type.Both:
+                case PeerType.Both:
                     serverConfiguration = new NetPeerConfiguration(AppName);
                     var cConfig = new NetPeerConfiguration(AppName);
                     cConfig.Port = (int) port + 1;
@@ -256,9 +259,9 @@ namespace Game.Shared.Network
                     break;
 
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+                    throw new ArgumentOutOfRangeException(nameof(this.LocalPeerType), this.LocalPeerType, null);
             }
-            OnInitialized?.Invoke(type);
+            OnInitialized?.Invoke(this.LocalPeerType);
         }
 
         /// <summary>
@@ -277,17 +280,17 @@ namespace Game.Shared.Network
                 client.Connect(ip, port);
             };
 
-            switch (type)
+            switch (LocalPeerType)
             {
-                case Type.Client:
+                case PeerType.Client:
                     if (client == null) throw exception;
                     connect.Invoke();
                     break;
 
-                case Type.Server:
+                case PeerType.Server:
                     throw new Exception("A Server can't connect to another Server.");
 
-                case Type.Both:
+                case PeerType.Both:
                     if (client == null || server == null) throw exception;
                     connect.Invoke();
                     break;
@@ -299,15 +302,15 @@ namespace Game.Shared.Network
 
         public void Update()
         {
-            switch (type)
+            switch (LocalPeerType)
             {
-                case Type.Client:
+                case PeerType.Client:
                     MessageLoop(client);
                     break;
-                case Type.Server:
+                case PeerType.Server:
                     MessageLoop(server);
                     break;
-                case Type.Both:
+                case PeerType.Both:
                     MessageLoop(client);
                     MessageLoop(server);
                     break;
@@ -323,7 +326,7 @@ namespace Game.Shared.Network
         /// <param name="peer">client or server</param>
         private void MessageLoop<T>(T peer) where T : NetPeer
         {
-            var t = typeof(T) == typeof(NetClient) ? Type.Client : Type.Server;
+            var t = typeof(T) == typeof(NetClient) ? PeerType.Client : PeerType.Server;
             NetIncomingMessage message;
             while ((message = peer?.ReadMessage()) != null)
             {
@@ -342,5 +345,10 @@ namespace Game.Shared.Network
         }
 
         #endregion
+
+        public bool IsLocalConnection(NetConnection connection)
+        {
+            return connection.Peer == client || connection.Peer == server;
+        }
     }
 }

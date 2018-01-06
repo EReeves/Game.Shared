@@ -1,13 +1,20 @@
-﻿using Nez;
-using Nez.UI;
+﻿using Nez.UI;
 
 namespace Game.Shared.Components.UI
 {
+    /// <summary>
+    /// Used to add UI to a UIComponent
+    /// </summary>
     public interface ISubUI
     {
-        UIComponent parent { get; set; }
-        Element element { get; set; }
-        
-        void RegisterSubUI(UIComponent _parent, Element _element = null);
+        UIComponent UI { get; set; }
+        Element Element { get; set; }
+
+        /// <summary>
+        /// Called to link the UI to the parent UIComponent with an optional element passed for miscelaneous use.
+        /// </summary>
+        /// <param name="ui"></param>
+        /// <param name="element"></param>
+        void RegisterSubUI(UIComponent ui, Element element = null);
     }
 }

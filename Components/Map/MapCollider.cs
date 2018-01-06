@@ -19,15 +19,15 @@ namespace Game.Shared.Components
                 var obj = collidersGroup[i];
 
                 var points = new Vector2[4];
-                points[0] = new Vector2(obj.X, obj.Y); //Topleft
-                points[1] = new Vector2(obj.X + obj.Width, obj.Y); //Topright
-                points[2] = new Vector2(obj.X + obj.Width, obj.Y + obj.Height); //BotRight
-                points[3] = new Vector2(obj.X, obj.Y + obj.Height); //BotLeft
+                points[0] = new Vector2(obj.Position.X, obj.Position.Y); //Topleft
+                points[1] = new Vector2(obj.Position.X + obj.Width, obj.Position.Y); //Topright
+                points[2] = new Vector2(obj.Position.X + obj.Width, obj.Position.Y + obj.Height); //BotRight
+                points[3] = new Vector2(obj.Position.X, obj.Position.Y + obj.Height); //BotLeft
 
                 for (var o = 0; o < 4; o++) points[o] = Isometric.WorldToIsometricWorld(points[o], map);
 
                 Colliders[i] = new PolygonCollider(points);
-              
+
                 Colliders[i].SetShouldColliderScaleAndRotateWithTransform(true);
                 //entity.addComponent<BoxCollider>(colliders[i]);
             }

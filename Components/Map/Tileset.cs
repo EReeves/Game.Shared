@@ -24,7 +24,7 @@ namespace Game.Shared.Components.Map
         public static Tileset TilesetForPosition(int pos, IList<Tileset> list)
         {
             for (var i = 0; i < list.Count(); i++)
-                if (list.Count() == 1 || list.Count() - 1 >= i + 1 && list[i + 1].FirstGid > pos)
+                if ((list.Count-1) == i || list[i + 1].FirstGid > pos && list[i].FirstGid <= pos)
                     return list[i];
             return null;
         }
